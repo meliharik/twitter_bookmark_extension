@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Twitter Bookmark Organizer",
+  "version": "1.0",
+  "description": "Scrape, categorize, and view your Twitter bookmarks.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://twitter.com/*",
+    "https://x.com/*",
+    "http://localhost:8080/*"
+  ],
+  "externally_connectable": {
+    "matches": ["http://localhost:5173/*"]
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://twitter.com/i/bookmarks", "https://x.com/i/bookmarks"],
+      "js": ["content.js"]
+    }
+  ]
+}

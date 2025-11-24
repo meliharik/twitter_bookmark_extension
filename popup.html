@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Twitter Bookmark Organizer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="logo-area">
+            <span class="logo-icon">🔖</span>
+            <h1>Bookmark Organizer</h1>
+        </div>
+        <div id="auth-status" class="auth-status disconnected">
+            <span class="status-dot"></span>
+            <span id="auth-text">Not Connected</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Login Section -->
+        <div id="login-section" class="section">
+            <p class="info-text">Connect to your dashboard to start organizing.</p>
+            <button id="login-btn" class="btn primary-btn">
+                Login with Web App
+            </button>
+        </div>
+
+        <!-- Scan Section -->
+        <div id="scan-section" class="section hidden">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value" id="scan-count">0</span>
+                    <span class="stat-label">Scanned</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="category-count">0</span>
+                    <span class="stat-label">Synced</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="start-btn" class="btn primary-btn">Start Syncing</button>
+                <button id="stop-btn" class="btn danger-btn hidden">Stop</button>
+            </div>
+
+            <div id="status-box" class="status-box">
+                Ready to sync bookmarks.
+            </div>
+            
+            <div class="settings-toggle" id="settings-toggle">
+                ⚙️ Settings
+            </div>
+            
+            <div id="settings-panel" class="settings-panel hidden">
+                <label>Gemini API Key</label>
+                <input type="text" id="api-key-input" placeholder="Paste API Key here">
+                <button id="save-key-btn" class="btn secondary-btn">Save Key</button>
+            </div>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
