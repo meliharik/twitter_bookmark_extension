@@ -1,137 +1,208 @@
-// Content script to scrape bookmarks
+console.log('[Content Script] Twitter Bookmark Organizer loaded');
 
-let isScraping = false;
-let scrapedTweets = new Map(); // Use Map to avoid duplicates by ID
+// Listen for messages from popup or background script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('[Content Script] Received message:', request.action);
 
-// Simple keyword-based classifier as fallback
-function simpleCategorize(text) {
-    text = text.toLowerCase();
-    if (text.includes('javascript') || text.includes('python') || text.includes('code') || text.includes('dev') || text.includes('api')) return 'Tech';
-    if (text.includes('design') || text.includes('ui') || text.includes('ux') || text.includes('color') || text.includes('font')) return 'Design';
-    if (text.includes('crypto') || text.includes('btc') || text.includes('eth') || text.includes('bitcoin')) return 'Crypto';
-    if (text.includes('ai') || text.includes('gpt') || text.includes('llm') || text.includes('model')) return 'AI';
-    if (text.includes('news') || text.includes('breaking')) return 'News';
-    if (text.includes('lol') || text.includes('funny') || text.includes('meme')) return 'Humor';
-    return 'General';
-}
-
-// Send scraped bookmarks to background for syncing
-async function syncBookmarks(bookmarks) {
-    return new Promise((resolve) => {
-        chrome.runtime.sendMessage({ 
-            action: 'sync_bookmarks', 
-            bookmarks: bookmarks 
-        }, (response) => {
-            resolve(response);
-        });
+  if (request.action === "scrape") {
+    scrapeTweet().then(data => {
+        console.log('[Content Script] Scraped tweet:');
+        console.log('  - Tweet ID:', data?.id);
+        console.log('  - Text:', data?.text?.substring(0, 50) + '...');
+        console.log('  - Author:', data?.authorName, '(@' + data?.authorHandle + ')');
+        console.log('  - Profile Picture:', data?.authorProfilePicture ? '✓' : '✗');
+        console.log('  - Media:', data?.mediaUrl ? '✓' : '✗');
+        console.log('  - Created At:', data?.tweetCreatedAt);
+        console.log('  - Is Bookmarked:', data?.isBookmarked);
+        sendResponse(data);
     });
-}
+    return true; // Keep channel open
+  } else if (request.action === "scrapeAll") {
+    // Use async function for scrolling
+    scrollAndScrapeAll(sendResponse);
+    return true; // Keep the message channel open for async response
+  }
 
-function parseTweetDom(article) {
-    try {
-        const textElement = article.querySelector('[data-testid="tweetText"]');
-        const text = textElement ? textElement.innerText : "";
-        
-        const userElement = article.querySelector('[data-testid="User-Name"]');
-        const authorName = userElement ? userElement.querySelector('span')?.innerText : "Unknown";
-        const authorHandle = userElement ? userElement.querySelectorAll('span')[1]?.innerText : "@unknown"; 
-        
-        const timeElement = article.querySelector('time');
-        const timestamp = timeElement ? timeElement.getAttribute('datetime') : new Date().toISOString();
-        
-        const linkElement = article.querySelector('a[href*="/status/"]');
-        const url = linkElement ? linkElement.href : window.location.href;
-        const id = url.split('/status/')[1]?.split('?')[0] || Math.random().toString(36);
+  return true; // Keep the message channel open for async response
+});
 
-        const imgElement = article.querySelector('img[src*="media"]');
-        const mediaUrl = imgElement ? imgElement.src : null;
+function scrapeTweet(articleElement = null) {
+  try {
+    // If no element provided, try to find the main tweet (focused or first one)
+    const article = articleElement || document.querySelector('article[data-testid="tweet"]');
+    if (!article) return null;
 
-        return { id, text, authorName, authorHandle, timestamp, url, mediaUrl };
-    } catch (e) {
-        return null;
+    const textElement = article.querySelector('div[data-testid="tweetText"]');
+    
+    // Check for "Show more" button and click it to reveal full text
+    const showMoreButton = textElement ? textElement.querySelector('[data-testid="tweet-text-show-more-link"]') : null;
+    if (showMoreButton) {
+        console.log('[Content Script] Found "Show more" button, clicking...');
+        showMoreButton.click();
+        // Wait a bit for the text to expand
+        await new Promise(resolve => setTimeout(resolve, 100));
     }
+
+    const text = textElement ? textElement.innerText : '';
+
+    const userElement = article.querySelector('div[data-testid="User-Name"]');
+    const authorName = userElement ? userElement.querySelector('span').innerText : '';
+    // Handle parsing carefully as structure varies
+    const handleParts = userElement ? userElement.innerText.split('@') : [];
+    const authorHandle = handleParts.length > 1 ? handleParts[1].split('\n')[0] : '';
+
+    // Get author profile picture - try multiple selectors
+    let authorProfilePicture = null;
+    const avatarSelectors = [
+      `a[href="/${authorHandle}"] img`,
+      `a[href="/${authorHandle}/photo"] img`,
+      'div[data-testid="Tweet-User-Avatar"] img',
+      'img[alt*="profile"]',
+      'article img[src*="profile_images"]'
+    ];
+
+    for (const selector of avatarSelectors) {
+      const img = article.querySelector(selector);
+      if (img && img.src) {
+        authorProfilePicture = img.src;
+        break;
+      }
+    }
+
+    const timeElement = article.querySelector('time');
+    let tweetId = '';
+    let url = window.location.href;
+    let tweetCreatedAt = null;
+
+    if (timeElement) {
+        const link = timeElement.parentElement.getAttribute('href');
+        if (link) {
+            tweetId = link.split('/').pop();
+            url = 'https://twitter.com' + link;
+        }
+        // Get tweet creation date from datetime attribute
+        const datetime = timeElement.getAttribute('datetime');
+        if (datetime) {
+            tweetCreatedAt = new Date(datetime).toISOString();
+        }
+    }
+    
+    // If we are scraping a specific element from a list, we MUST rely on the time element link
+    // If we are scraping the main tweet on a status page, we can fallback to window.location
+    if (!tweetId && !articleElement) {
+        tweetId = window.location.pathname.split('/').pop();
+    }
+
+    // Media (Image/Video)
+    const imgElement = article.querySelector('img[alt="Image"]');
+    const mediaUrl = imgElement ? imgElement.src : null;
+
+    // Check if tweet is bookmarked
+    // Twitter uses aria-label or data-testid for bookmark button
+    const bookmarkButton = article.querySelector('[data-testid="bookmark"], [data-testid="removeBookmark"]');
+    const isBookmarked = bookmarkButton?.getAttribute('data-testid') === 'removeBookmark';
+
+    // Skip if no text and no media (likely an ad or empty container)
+    if (!text && !mediaUrl) return null;
+
+    return {
+      id: tweetId,
+      text: text,
+      authorName: authorName,
+      authorHandle: authorHandle,
+      authorProfilePicture: authorProfilePicture,
+      url: url,
+      mediaUrl: mediaUrl,
+      tweetCreatedAt: tweetCreatedAt,
+      category: 'Uncategorized',
+      isBookmarked: isBookmarked
+    };
+  } catch (e) {
+    console.error('Scraping error:', e);
+    return null;
+  }
 }
 
-
-
-// Helper to ask background to classify
-async function categorizeTweet(text) {
-    return new Promise((resolve) => {
-        chrome.runtime.sendMessage({ 
-            action: 'classify_tweet', 
-            text: text 
-        }, (response) => {
-            resolve(response.category || 'Uncategorized');
-        });
-    });
-}
-
-async function scrollAndScrape() {
-    if (!isScraping) return;
-
+function scrapeAllTweets() {
     const articles = document.querySelectorAll('article[data-testid="tweet"]');
-    let newTweets = []; // Define local batch
+    const tweets = [];
+    const seenIds = new Set();
 
-    for (const article of articles) {
-        const partialData = parseTweetDom(article);
-        if (partialData && !scrapedTweets.has(partialData.id)) {
-            // Categorize
-            const category = await categorizeTweet(partialData.text);
-            const fullData = { ...partialData, category };
-            
-            scrapedTweets.set(fullData.id, fullData);
-            newTweets.push(fullData);
+    articles.forEach(article => {
+        const tweetData = scrapeTweet(article);
+        // Only include bookmarked tweets
+        if (tweetData && tweetData.id && !seenIds.has(tweetData.id) && tweetData.isBookmarked) {
+            tweets.push(tweetData);
+            seenIds.add(tweetData.id);
+        }
+    });
+
+    console.log(`[Content Script] Found ${tweets.length} bookmarked tweets out of ${articles.length} total tweets`);
+    return tweets;
+}
+
+// Async function to scroll page and scrape tweets progressively
+async function scrollAndScrapeAll(sendResponse) {
+    console.log('[Content Script] Starting progressive scroll and scrape...');
+
+    const allScrapedTweets = [];
+    const seenIds = new Set();
+    let lastHeight = document.documentElement.scrollHeight;
+    let lastTweetCount = 0;
+    let scrollAttempts = 0;
+    let noNewContentCount = 0;
+    const maxScrollAttempts = 200;
+    const maxNoNewContent = 5;
+    const scrollDelay = 2000;
+
+    // Scroll and scrape progressively
+    while (scrollAttempts < maxScrollAttempts && noNewContentCount < maxNoNewContent) {
+        // Scrape current visible tweets
+        const articles = document.querySelectorAll('article[data-testid="tweet"]');
+
+        for (const article of articles) {
+            const tweetData = await scrapeTweet(article);
+            // Only include bookmarked tweets and avoid duplicates
+            if (tweetData && tweetData.id && !seenIds.has(tweetData.id) && tweetData.isBookmarked) {
+                allScrapedTweets.push(tweetData);
+                seenIds.add(tweetData.id);
+            }
+        }
+
+        const currentTweetCount = articles.length;
+        console.log(`[Content Script] Scraped progress: ${allScrapedTweets.length} unique bookmarks collected (${currentTweetCount} total tweets in DOM)`);
+
+        // Scroll to bottom
+        window.scrollTo(0, document.documentElement.scrollHeight);
+
+        // Wait for content to load
+        await new Promise(resolve => setTimeout(resolve, scrollDelay));
+
+        const newHeight = document.documentElement.scrollHeight;
+        const newTweetCount = document.querySelectorAll('article[data-testid="tweet"]').length;
+
+        // Check both height and tweet count
+        if (newHeight === lastHeight && newTweetCount === lastTweetCount) {
+            noNewContentCount++;
+            console.log(`[Content Script] No new content (Attempt ${noNewContentCount}/${maxNoNewContent})`);
+        } else {
+            noNewContentCount = 0;
+            const newTweets = newTweetCount - lastTweetCount;
+            console.log(`[Content Script] New content loaded: +${newTweets} tweets`);
+        }
+
+        lastHeight = newHeight;
+        lastTweetCount = newTweetCount;
+        scrollAttempts++;
+
+        // Log progress every 10 scrolls
+        if (scrollAttempts % 10 === 0) {
+            console.log(`[Content Script] ⏳ Progress: ${scrollAttempts} scrolls, ${allScrapedTweets.length} bookmarks collected`);
         }
     }
 
-    // Batch process new tweets
-    if (newTweets.length > 0) {
-        console.log(`Syncing ${newTweets.length} new tweets...`);
-        
-        // Sync to backend
-        await syncBookmarks(newTweets);
-        
-        // Store locally just for cache/deduplication
-        const storage = await chrome.storage.local.get(['bookmarks']);
-        const currentBookmarks = storage.bookmarks || [];
-        await chrome.storage.local.set({ 
-            bookmarks: [...currentBookmarks, ...newTweets] 
-        });
+    console.log(`[Content Script] ✅ Scrolling complete!`);
+    console.log(`[Content Script] 📊 Total bookmarks collected: ${allScrapedTweets.length}`);
 
-        // Update popup stats (optional, if popup listens)
-        chrome.runtime.sendMessage({
-            action: 'stats_update',
-            count: newTweets.length
-        });
-    }
-    
-    // Scroll down
-    window.scrollTo(0, document.body.scrollHeight);
-    
-    // Wait for content to load
-    await new Promise(r => setTimeout(r, 2000));
-
-    if (isScraping) {
-        requestAnimationFrame(scrollAndScrape);
-    }
+    sendResponse(allScrapedTweets);
 }
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "start_scraping") {
-        if (isScraping) return;
-        isScraping = true;
-        console.log("Started scraping bookmarks...");
-        
-        // Load existing to avoid dupes if re-running
-        chrome.storage.local.get(['tweets'], (result) => {
-            if (result.tweets) {
-                result.tweets.forEach(t => scrapedTweets.set(t.id, t));
-            }
-            scrollAndScrape();
-        });
-    }
-    
-    if (message.action === "stop_scraping") {
-        isScraping = false;
-    }
-});

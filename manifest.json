@@ -2,31 +2,52 @@
   "manifest_version": 3,
   "name": "Twitter Bookmark Organizer",
   "version": "1.0",
-  "description": "Scrape, categorize, and view your Twitter bookmarks.",
+  "description": "Save and organize your Twitter bookmarks easily.",
   "permissions": [
     "activeTab",
     "scripting",
     "storage",
-    "tabs"
+    "contextMenus",
+    "identity"
   ],
   "host_permissions": [
+    "http://localhost:5173/*",
+    "http://localhost:8080/*",
+    "http://13.51.199.12:8080/*",
     "https://twitter.com/*",
-    "https://x.com/*",
-    "http://localhost:8080/*"
+    "https://x.com/*"
   ],
-  "externally_connectable": {
-    "matches": ["http://localhost:5173/*"]
-  },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["https://twitter.com/i/bookmarks", "https://x.com/i/bookmarks"],
+      "matches": ["https://twitter.com/*", "https://x.com/*"],
       "js": ["content.js"]
+    },
+    {
+      "matches": ["http://localhost:5173/*"],
+      "js": ["sync-auth.js"]
     }
-  ]
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "oauth2": {
+    "client_id": "838045825556-fbucevqkrvhugp7oehqudokljn8hmhm7.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  }
 }
