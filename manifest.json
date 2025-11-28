@@ -12,6 +12,9 @@
   ],
   "host_permissions": [
     "http://localhost:5173/*",
+    "http://localhost:5174/*",
+    "http://localhost:5175/*",
+    "http://127.0.0.1:5173/*",
     "http://localhost:8080/*",
     "http://13.51.199.12:8080/*",
     "https://twitter.com/*",
@@ -34,7 +37,12 @@
       "js": ["content.js"]
     },
     {
-      "matches": ["http://localhost:5173/*"],
+      "matches": [
+        "http://localhost:5173/*",
+        "http://localhost:5174/*",
+        "http://localhost:5175/*",
+        "http://127.0.0.1:5173/*"
+      ],
       "js": ["sync-auth.js"]
     }
   ],

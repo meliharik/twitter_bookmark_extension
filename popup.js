@@ -436,14 +436,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Trigger sync on localhost tabs
   async function triggerDashboardSync() {
       try {
-        const tabs = await chrome.tabs.query({ url: ["http://localhost:5173/*", "http://13.51.199.12:8080/*"] });
-        tabs.forEach(tab => {
-            chrome.tabs.sendMessage(tab.id, { type: 'REFETCH_BOOKMARKS' }).catch(() => {
-                // Ignore errors if tab is not ready or script not injected
-            });
+        const tabs = await chrome.tabs.query({
+          url: [
+            "http://localhost:5173/*",
+            "http://localhost:5174/*",
+            "http://localhost:5175/*",
+            "http://127.0.0.1:5173/*",
+            "http://13.51.199.12:8080/*"
+          ]
         });
+
+        if (tabs.length === 0) {
+          console.log('[Popup] No dashboard tabs found to sync');
+          return;
+        }
+
+        for (const tab of tabs) {
+          try {
+            await chrome.tabs.sendMessage(tab.id, { type: 'REFETCH_BOOKMARKS' });
+            console.log('[Popup] Successfully notified dashboard tab:', tab.id);
+          } catch (error) {
+            // Tab might not have content script loaded yet, or page might be loading
+            console.log('[Popup] Could not send message to tab', tab.id, '- This is normal if the page is still loading');
+          }
+        }
       } catch (e) {
-          console.log("Could not trigger dashboard sync", e);
+          console.log("[Popup] Could not trigger dashboard sync:", e);
       }
   }
 });

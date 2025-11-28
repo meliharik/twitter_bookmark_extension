@@ -26,14 +26,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true; // Keep the message channel open for async response
 });
 
-function scrapeTweet(articleElement = null) {
+async function scrapeTweet(articleElement = null) {
   try {
     // If no element provided, try to find the main tweet (focused or first one)
     const article = articleElement || document.querySelector('article[data-testid="tweet"]');
     if (!article) return null;
 
     const textElement = article.querySelector('div[data-testid="tweetText"]');
-    
+
     // Check for "Show more" button and click it to reveal full text
     const showMoreButton = textElement ? textElement.querySelector('[data-testid="tweet-text-show-more-link"]') : null;
     if (showMoreButton) {
