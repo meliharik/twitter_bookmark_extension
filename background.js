@@ -57,3 +57,38 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
   }
 });
+
+// Listen for saveBookmark message from content script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'saveBookmark') {
+    const tweetData = request.data;
+    
+    chrome.storage.local.get(['token'], async (result) => {
+      const token = result.token;
+      if (!token) {
+        console.log('Not logged in, cannot save bookmark');
+        // Optionally notify user they need to login
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/bookmarks/sync`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify([tweetData])
+        });
+
+        if (response.ok) {
+          console.log('Bookmark saved successfully to backend');
+        } else {
+          console.error('Failed to save bookmark to backend:', response.status);
+        }
+      } catch (error) {
+        console.error('Error saving bookmark:', error);
+      }
+    });
+  }
+});

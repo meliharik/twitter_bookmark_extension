@@ -257,3 +257,25 @@ input:focus {
     width: 0%;
     transition: width 0.3s ease;
 }
+
+/* Custom Bookmark Button */
+.custom-bookmark-btn-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0 8px;
+    transition: background-color 0.2s;
+    border-radius: 9999px;
+    margin-left: 4px;
+}
+
+.custom-bookmark-btn-container:hover {
+    background-color: rgba(29, 155, 240, 0.1);
+}
+
+.custom-bookmark-btn-container svg {
+    width: 1.25em;
+    height: 1.25em;
+    fill: currentColor;
+}
