@@ -209,27 +209,41 @@ async function scrollAndScrapeAll(sendResponse) {
 
 // --- Custom Button Injection Logic ---
 
-function createCustomButton() {
+function createCustomButton(isBookmarked = false) {
     const button = document.createElement('div');
     button.className = 'css-175oi2r r-1777fci r-bt1l66 r-bztko3 r-16y2uox r-16l9doz custom-bookmark-btn-container';
     button.setAttribute('role', 'button');
     button.setAttribute('tabindex', '0');
     button.setAttribute('data-testid', 'custom-bookmark-button');
     
-    // Use an SVG icon similar to Twitter's style but distinct
-    button.innerHTML = `
-        <div dir="ltr" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0 r-37j5jr r-a023e6 r-rjixqe r-16dba41 r-1awozwy r-6koalj r-1h0z5md r-o7ynqc r-clp7fh r-13qz1uu" style="color: rgb(29, 155, 240);">
-            <div class="css-175oi2r r-xoduu5 r-1p0dtai r-1d2f490 r-u8s1d r-zchlnj r-ipm5af r-1niwhzg r-sdzlij r-xf4iuw r-o7ynqc r-6416eg r-1ny4l3l"></div>
-            <svg viewBox="0 0 24 24" aria-hidden="true" class="r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-1plcrui r-lrvibr r-1xvli5t r-1hdv0qi">
-                <g>
-                    <path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"></path>
-                    <path d="M12 8v6M9 11h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </g>
-            </svg>
-            <span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0" style="margin-left: 4px; font-size: 13px; font-weight: bold;">Save</span>
-        </div>
-    `;
+    updateButtonState(button, isBookmarked);
+    
     return button;
+}
+
+function updateButtonState(button, isBookmarked) {
+    if (isBookmarked) {
+        button.innerHTML = `
+            <div dir="ltr" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0 r-37j5jr r-a023e6 r-rjixqe r-16dba41 r-1awozwy r-6koalj r-1h0z5md r-o7ynqc r-clp7fh r-13qz1uu" style="color: rgb(0, 186, 124);">
+                <div class="css-175oi2r r-xoduu5 r-1p0dtai r-1d2f490 r-u8s1d r-zchlnj r-ipm5af r-1niwhzg r-sdzlij r-xf4iuw r-o7ynqc r-6416eg r-1ny4l3l"></div>
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-1plcrui r-lrvibr r-1xvli5t r-1hdv0qi">
+                    <g><path d="M12 1.75C6.34 1.75 1.75 6.34 1.75 12S6.34 22.25 12 22.25 22.25 17.66 22.25 12 17.66 1.75 12 1.75zm-.25 10.48L10.5 14l-2.75-3-.25-.27.25-.25 1.25-1.25.25-.25.25.25 1.25 1.25 3.5-3.5.25-.25.25.25 1.25 1.25.25.25-.25.25-4.25 4.25-.25.25z"></path></g>
+                </svg>
+            </div>
+        `;
+    } else {
+        button.innerHTML = `
+            <div dir="ltr" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0 r-37j5jr r-a023e6 r-rjixqe r-16dba41 r-1awozwy r-6koalj r-1h0z5md r-o7ynqc r-clp7fh r-13qz1uu" style="color: rgb(83, 100, 113);">
+                <div class="css-175oi2r r-xoduu5 r-1p0dtai r-1d2f490 r-u8s1d r-zchlnj r-ipm5af r-1niwhzg r-sdzlij r-xf4iuw r-o7ynqc r-6416eg r-1ny4l3l"></div>
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-1plcrui r-lrvibr r-1xvli5t r-1hdv0qi">
+                    <g>
+                        <path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"></path>
+                        <path d="M12 8v6M9 11h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </g>
+                </svg>
+            </div>
+        `;
+    }
 }
 
 function injectButtons() {
@@ -239,56 +253,53 @@ function injectButtons() {
         // Check if we already injected the button
         if (article.querySelector('[data-testid="custom-bookmark-button"]')) return;
 
-        // Find the action bar (Reply, Retweet, Like, Share, etc.)
-        const actionBar = article.querySelector('div[role="group"]');
-        if (!actionBar) return;
+        // Find the native bookmark button
+        const nativeBookmarkBtn = article.querySelector('[data-testid="bookmark"], [data-testid="removeBookmark"]');
+        if (!nativeBookmarkBtn) return;
 
-        const customBtn = createCustomButton();
+        // Determine initial state
+        const isBookmarked = nativeBookmarkBtn.getAttribute('data-testid') === 'removeBookmark';
+
+        // Hide native button
+        nativeBookmarkBtn.style.display = 'none';
+
+        // Create custom button
+        const customBtn = createCustomButton(isBookmarked);
         
-        // Insert as the last item in the action bar
-        actionBar.appendChild(customBtn);
+        // Insert custom button BEFORE the native button (to keep position)
+        nativeBookmarkBtn.parentNode.insertBefore(customBtn, nativeBookmarkBtn);
 
         // Add click listener
         customBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
             
+            // Toggle state immediately for UI responsiveness
+            const currentlyBookmarked = customBtn.querySelector('svg').innerHTML.includes('M12 1.75'); // Simple check based on path
+            const newState = !currentlyBookmarked;
+            updateButtonState(customBtn, newState);
+
             // 1. Trigger native bookmark
-            const bookmarkBtn = article.querySelector('[data-testid="bookmark"], [data-testid="removeBookmark"]');
-            if (bookmarkBtn) {
-                bookmarkBtn.click();
-            }
+            nativeBookmarkBtn.click();
 
-            // 2. Scrape and save to our system
-            // Visual feedback - change icon/color temporarily
-            const originalHTML = customBtn.innerHTML;
-            customBtn.innerHTML = `
-                <div dir="ltr" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0 r-37j5jr r-a023e6 r-rjixqe r-16dba41 r-1awozwy r-6koalj r-1h0z5md r-o7ynqc r-clp7fh r-13qz1uu" style="color: rgb(0, 186, 124);">
-                    <svg viewBox="0 0 24 24" aria-hidden="true" class="r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-1plcrui r-lrvibr r-1xvli5t r-1hdv0qi">
-                        <g><path d="M12 1.75C6.34 1.75 1.75 6.34 1.75 12S6.34 22.25 12 22.25 22.25 17.66 22.25 12 17.66 1.75 12 1.75zm-.25 10.48L10.5 14l-2.75-3-.25-.27.25-.25 1.25-1.25.25-.25.25.25 1.25 1.25 3.5-3.5.25-.25.25.25 1.25 1.25.25.25-.25.25-4.25 4.25-.25.25z"></path></g>
-                    </svg>
-                    <span class="css-901oao css-16my406 r-poiln3 r-bcqeeo r-qvutc0" style="margin-left: 4px; font-size: 13px; font-weight: bold;">Saved</span>
-                </div>
-            `;
-
-            try {
-                // Wait a brief moment for the native bookmark action to potentially update UI state
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                const tweetData = await scrapeTweet(article);
-                if (tweetData) {
-                    console.log('[Content Script] Saving tweet via custom button:', tweetData);
-                    chrome.runtime.sendMessage({
-                        action: "saveBookmark",
-                        data: tweetData
-                    });
+            // 2. If saving (not removing), scrape and save to our system
+            if (newState) {
+                try {
+                    // Wait a brief moment for the native bookmark action to potentially update UI state (though we handled UI already)
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    const tweetData = await scrapeTweet(article);
+                    if (tweetData) {
+                        console.log('[Content Script] Saving tweet via custom button:', tweetData);
+                        chrome.runtime.sendMessage({
+                            action: "saveBookmark",
+                            data: tweetData
+                        });
+                    }
+                } catch (err) {
+                    console.error('[Content Script] Error saving via custom button:', err);
+                    // Revert button on error? Maybe not, as native action might have succeeded.
                 }
-            } catch (err) {
-                console.error('[Content Script] Error saving via custom button:', err);
-                // Revert button on error
-                setTimeout(() => {
-                    customBtn.innerHTML = originalHTML;
-                }, 2000);
             }
         });
     });
