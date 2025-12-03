@@ -15,9 +15,9 @@
 2. **F12** ile Developer Tools'u aç
 3. **Console** sekmesine bak
 4. Şu mesajları görmeli:
-   - `[Twitter Bookmark Sync] Content script loaded`
-   - `[Twitter Bookmark Sync] Received auth data from website`
-   - `[Twitter Bookmark Sync] Auth synced to extension storage`
+   - `[categoriX Sync] Content script loaded`
+   - `[categoriX Sync] Received auth data from website`
+   - `[categoriX Sync] Auth synced to extension storage`
 
 ### Adım 3: Extension Storage'ı Kontrol Et
 

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Twitter Bookmark Organizer",
+  "name": "categoriX",
   "version": "1.0",
-  "description": "Save and organize your Twitter bookmarks easily.",
+  "description": "Save and organize your bookmarks easily.",
   "permissions": [
     "activeTab",
     "scripting",

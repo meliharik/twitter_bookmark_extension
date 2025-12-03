@@ -15,7 +15,7 @@
 ## Adım 2: Google Cloud Console'da OAuth Client Oluştur
 
 1. [Google Cloud Console](https://console.cloud.google.com/) aç
-2. Mevcut projeyi seç (Twitter Bookmark için kullandığın proje)
+2. Mevcut projeyi seç (categoriX için kullandığın proje)
 3. Sol menüden **APIs & Services** > **Credentials** seç
 
 ### OAuth Client ID Oluştur
@@ -23,7 +23,7 @@
 4. **+ CREATE CREDENTIALS** tıkla
 5. **OAuth client ID** seç
 6. **Application type** olarak **Chrome extension** seç
-7. **Name**: `Twitter Bookmark Extension`
+7. **Name**: `categoriX Extension`
 8. **Item ID**: Extension ID'yi yapıştır (Adım 1'den)
 9. **CREATE** tıkla
 

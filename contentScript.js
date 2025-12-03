@@ -14,10 +14,10 @@ window.addEventListener('message', async (event) => {
         userEmail,
         profilePictureUrl: profilePictureUrl || null
       });
-      console.log('Twitter Bookmark: Auth data synced to extension');
+      console.log('categoriX: Auth data synced to extension');
     }
   } else if (event.data.type === 'TWITTER_BOOKMARK_LOGOUT') {
     await chrome.storage.local.remove(['token', 'userEmail', 'profilePictureUrl']);
-    console.log('Twitter Bookmark: Logged out from extension');
+    console.log('categoriX: Logged out from extension');
   }
 });

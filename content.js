@@ -1,4 +1,4 @@
-console.log('[Content Script] Twitter Bookmark Organizer loaded');
+console.log('[Content Script] categoriX loaded');
 
 // Listen for messages from popup or background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -211,10 +211,27 @@ async function scrollAndScrapeAll(sendResponse) {
 
 function createCustomButton(isBookmarked = false) {
     const button = document.createElement('div');
+    // Use Twitter's class names for layout but add our own for specific styling
     button.className = 'css-175oi2r r-1777fci r-bt1l66 r-bztko3 r-16y2uox r-16l9doz custom-bookmark-btn-container';
     button.setAttribute('role', 'button');
     button.setAttribute('tabindex', '0');
     button.setAttribute('data-testid', 'custom-bookmark-button');
+    button.style.display = 'flex';
+    button.style.alignItems = 'center';
+    button.style.justifyContent = 'center';
+    button.style.transition = 'background-color 0.2s';
+    button.style.borderRadius = '9999px';
+    button.style.width = '34.75px';
+    button.style.height = '34.75px';
+    button.style.marginRight = '8px'; // Spacing
+    
+    // Hover effect
+    button.addEventListener('mouseenter', () => {
+        button.style.backgroundColor = 'rgba(29, 155, 240, 0.1)';
+    });
+    button.addEventListener('mouseleave', () => {
+        button.style.backgroundColor = 'transparent';
+    });
     
     updateButtonState(button, isBookmarked);
     
@@ -223,26 +240,28 @@ function createCustomButton(isBookmarked = false) {
 
 function updateButtonState(button, isBookmarked) {
     if (isBookmarked) {
+        // Saved State (Green/Filled)
         button.innerHTML = `
             <div dir="ltr" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0 r-37j5jr r-a023e6 r-rjixqe r-16dba41 r-1awozwy r-6koalj r-1h0z5md r-o7ynqc r-clp7fh r-13qz1uu" style="color: rgb(0, 186, 124);">
-                <div class="css-175oi2r r-xoduu5 r-1p0dtai r-1d2f490 r-u8s1d r-zchlnj r-ipm5af r-1niwhzg r-sdzlij r-xf4iuw r-o7ynqc r-6416eg r-1ny4l3l"></div>
-                <svg viewBox="0 0 24 24" aria-hidden="true" class="r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-1plcrui r-lrvibr r-1xvli5t r-1hdv0qi">
-                    <g><path d="M12 1.75C6.34 1.75 1.75 6.34 1.75 12S6.34 22.25 12 22.25 22.25 17.66 22.25 12 17.66 1.75 12 1.75zm-.25 10.48L10.5 14l-2.75-3-.25-.27.25-.25 1.25-1.25.25-.25.25.25 1.25 1.25 3.5-3.5.25-.25.25.25 1.25 1.25.25.25-.25.25-4.25 4.25-.25.25z"></path></g>
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-1plcrui r-lrvibr r-1xvli5t r-1hdv0qi" style="width: 20px; height: 20px;">
+                    <g><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></g>
                 </svg>
             </div>
         `;
+        button.setAttribute('title', 'Saved to CategoriX');
     } else {
+        // Unsaved State (Blue/Outline with Plus)
         button.innerHTML = `
-            <div dir="ltr" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0 r-37j5jr r-a023e6 r-rjixqe r-16dba41 r-1awozwy r-6koalj r-1h0z5md r-o7ynqc r-clp7fh r-13qz1uu" style="color: rgb(83, 100, 113);">
-                <div class="css-175oi2r r-xoduu5 r-1p0dtai r-1d2f490 r-u8s1d r-zchlnj r-ipm5af r-1niwhzg r-sdzlij r-xf4iuw r-o7ynqc r-6416eg r-1ny4l3l"></div>
-                <svg viewBox="0 0 24 24" aria-hidden="true" class="r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-1plcrui r-lrvibr r-1xvli5t r-1hdv0qi">
+            <div dir="ltr" class="css-146c3p1 r-bcqeeo r-1ttztb7 r-qvutc0 r-37j5jr r-a023e6 r-rjixqe r-16dba41 r-1awozwy r-6koalj r-1h0z5md r-o7ynqc r-clp7fh r-13qz1uu" style="color: rgb(29, 155, 240);">
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="r-4qtqp9 r-yyyyoo r-dnmrzs r-bnwqim r-1plcrui r-lrvibr r-1xvli5t r-1hdv0qi" style="width: 20px; height: 20px;">
                     <g>
-                        <path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z"></path>
-                        <path d="M12 8v6M9 11h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" fill="none" stroke="currentColor" stroke-width="2"></path>
+                        <path d="M12 7v6M9 10h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
                     </g>
                 </svg>
             </div>
         `;
+        button.setAttribute('title', 'Save to CategoriX');
     }
 }
 

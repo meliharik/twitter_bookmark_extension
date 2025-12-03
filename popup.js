@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             buttons.fetchAll.style.cursor = "pointer";
         } else {
             buttons.fetchAll.disabled = true;
-            buttons.fetchAll.title = "Open Twitter bookmarks page to use this feature";
+            buttons.fetchAll.title = "Open categoriX bookmarks page to use this feature";
             buttons.fetchAll.style.opacity = "0.5";
             buttons.fetchAll.style.cursor = "not-allowed";
         }
